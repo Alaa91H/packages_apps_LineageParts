@@ -50,6 +50,7 @@ public class RechargeLevelPreference extends SliderPreference
         final int rechargeLevel = getSetting();
 
         mSlider = (Slider) holder.findViewById(R.id.slider);
+        mSlider.removeOnSliderTouchListener(this);
         mSlider.addOnSliderTouchListener(this);
         mSlider.setLabelBehavior(LabelFormatter.LABEL_FLOATING);
         mSlider.setStepSize(1);
