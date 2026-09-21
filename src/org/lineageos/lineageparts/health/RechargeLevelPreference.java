@@ -25,7 +25,7 @@ import org.lineageos.lineageparts.R;
 public class RechargeLevelPreference extends SliderPreference
         implements Slider.OnSliderTouchListener {
     private static final int MIN_RECHARGE_LEVEL = 20;
-    private static final int MIN_RECHARGE_GAP = 5;
+    private static final int MIN_RECHARGE_GAP = 1;
 
     private Slider mSlider;
     private TextView mRechargeLevelValue;
