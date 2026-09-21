@@ -291,8 +291,13 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
                 mChargingControlRechargeLevelPref.setChargingLimit((Integer) objValue);
             }
         } else if (preference == mChargingControlLimitSchedulePref) {
-            mChargingControlLimitSchedulePref.setChecked((Boolean) objValue);
-            refreshUi(MODE_LIMIT);
+            final boolean scheduleEnabled = (Boolean) objValue;
+            if (mChargingControlLimitStartTimePref != null) {
+                mChargingControlLimitStartTimePref.setVisible(scheduleEnabled);
+            }
+            if (mChargingControlLimitEndTimePref != null) {
+                mChargingControlLimitEndTimePref.setVisible(scheduleEnabled);
+            }
         }
         return true;
     }
