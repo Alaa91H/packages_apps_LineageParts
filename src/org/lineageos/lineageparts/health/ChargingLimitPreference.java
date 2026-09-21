@@ -65,6 +65,11 @@ public class ChargingLimitPreference extends SliderPreference
     public void onStopTrackingTouch(final Slider slider) {
         final int newLimit = (int) slider.getValue();
 
+        if (!callChangeListener(newLimit)) {
+            setValue(getSetting());
+            return;
+        }
+
         setSetting(newLimit);
         updateValue(newLimit);
     }
