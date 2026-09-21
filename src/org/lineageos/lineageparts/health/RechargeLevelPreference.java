@@ -80,9 +80,17 @@ public class RechargeLevelPreference extends SliderPreference
     }
 
     public void setValue(final int value) {
-        final int clampedValue = clamp(value, getChargingLimit());
+        final int chargingLimit = getChargingLimit();
+        final int maxRechargeLevel = getMaxRechargeLevel(chargingLimit);
+        final int clampedValue = clamp(value, chargingLimit);
         if (mSlider != null) {
-            mSlider.setValue(clampedValue);
+            if (maxRechargeLevel < mSlider.getValueTo()) {
+                mSlider.setValue(clampedValue);
+                mSlider.setValueTo(maxRechargeLevel);
+            } else {
+                mSlider.setValueTo(maxRechargeLevel);
+                mSlider.setValue(clampedValue);
+            }
         }
         updateValue(clampedValue);
     }
