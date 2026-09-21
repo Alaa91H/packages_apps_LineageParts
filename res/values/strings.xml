@@ -84,6 +84,14 @@
     <string name="charging_control_target_time_summary">Battery will be fully charged by %s</string>
     <string name="charging_control_limit_title">Limit</string>
     <string name="charging_control_limit_summary">Current limit: %d%%</string>
+    <string name="charging_control_recharge_level_title">Recharge level</string>
+    <string name="charging_control_recharge_level_summary">Charging resumes at %d%%</string>
+    <string name="charging_control_limit_schedule_title">Use schedule</string>
+    <string name="charging_control_limit_schedule_summary">Apply the charging limit only during the selected time range</string>
+    <string name="charging_control_limit_start_time_title">Limit start time</string>
+    <string name="charging_control_limit_start_time_summary">Charging limit starts at %s</string>
+    <string name="charging_control_limit_end_time_title">Limit end time</string>
+    <string name="charging_control_limit_end_time_summary">Charging limit ends at %s</string>
 
     <!-- Battery light settings -->
     <string name="battery_light_title">Battery light</string>

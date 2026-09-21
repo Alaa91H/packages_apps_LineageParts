@@ -23,6 +23,7 @@ import androidx.preference.PreferenceScreen;
 import lineageos.health.HealthInterface;
 import lineageos.preference.LineageSystemSettingListPreference;
 import lineageos.preference.LineageSystemSettingMainSwitchPreference;
+import lineageos.preference.LineageSystemSettingSwitchPreference;
 import lineageos.providers.LineageSettings;
 
 import org.lineageos.lineageparts.R;
@@ -45,12 +46,24 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
     private static final String CHARGING_CONTROL_START_TIME_PREF = "charging_control_start_time";
     private static final String CHARGING_CONTROL_TARGET_TIME_PREF = "charging_control_target_time";
     private static final String CHARGING_CONTROL_LIMIT_PREF = "charging_control_charging_limit";
+    private static final String CHARGING_CONTROL_RECHARGE_LEVEL_PREF =
+            "charging_control_recharge_level";
+    private static final String CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED_PREF =
+            "charging_control_limit_schedule_enabled";
+    private static final String CHARGING_CONTROL_LIMIT_START_TIME_PREF =
+            "charging_control_limit_start_time";
+    private static final String CHARGING_CONTROL_LIMIT_END_TIME_PREF =
+            "charging_control_limit_end_time";
 
     private LineageSystemSettingMainSwitchPreference mChargingControlEnabledPref;
     private LineageSystemSettingListPreference mChargingControlModePref;
     private StartTimePreference mChargingControlStartTimePref;
     private TargetTimePreference mChargingControlTargetTimePref;
     private ChargingLimitPreference mChargingControlLimitPref;
+    private RechargeLevelPreference mChargingControlRechargeLevelPref;
+    private LineageSystemSettingSwitchPreference mChargingControlLimitSchedulePref;
+    private LimitStartTimePreference mChargingControlLimitStartTimePref;
+    private LimitEndTimePreference mChargingControlLimitEndTimePref;
 
     private HealthInterface mHealthInterface;
 
@@ -76,6 +89,16 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
         mChargingControlStartTimePref = prefSet.findPreference(CHARGING_CONTROL_START_TIME_PREF);
         mChargingControlTargetTimePref = prefSet.findPreference(CHARGING_CONTROL_TARGET_TIME_PREF);
         mChargingControlLimitPref = prefSet.findPreference(CHARGING_CONTROL_LIMIT_PREF);
+        mChargingControlLimitPref.setOnPreferenceChangeListener(this);
+        mChargingControlRechargeLevelPref =
+                prefSet.findPreference(CHARGING_CONTROL_RECHARGE_LEVEL_PREF);
+        mChargingControlLimitSchedulePref =
+                prefSet.findPreference(CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED_PREF);
+        mChargingControlLimitSchedulePref.setOnPreferenceChangeListener(this);
+        mChargingControlLimitStartTimePref =
+                prefSet.findPreference(CHARGING_CONTROL_LIMIT_START_TIME_PREF);
+        mChargingControlLimitEndTimePref =
+                prefSet.findPreference(CHARGING_CONTROL_LIMIT_END_TIME_PREF);
 
         if (mChargingControlLimitPref != null) {
             if (mHealthInterface.allowFineGrainedSettings()) {
@@ -95,6 +118,14 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
         refreshValues();
 
         watch(LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_ENABLED));
+        watch(LineageSettings.System.getUriFor(
+                LineageSettings.System.CHARGING_CONTROL_RECHARGE_LEVEL));
+        watch(LineageSettings.System.getUriFor(
+                LineageSettings.System.CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED));
+        watch(LineageSettings.System.getUriFor(
+                LineageSettings.System.CHARGING_CONTROL_LIMIT_START_TIME));
+        watch(LineageSettings.System.getUriFor(
+                LineageSettings.System.CHARGING_CONTROL_LIMIT_END_TIME));
     }
 
     @Override
@@ -111,7 +142,6 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
         if (mChargingControlModePref != null) {
             final int chargingControlMode = mHealthInterface.getMode();
             mChargingControlModePref.setValue(Integer.toString(chargingControlMode));
-            refreshUi();
         }
 
         if (mChargingControlStartTimePref != null) {
@@ -128,6 +158,30 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
             mChargingControlLimitPref.setValue(
                     mChargingControlLimitPref.getSetting());
         }
+
+        if (mChargingControlRechargeLevelPref != null) {
+            mChargingControlRechargeLevelPref.setChargingLimit(mHealthInterface.getLimit());
+            mChargingControlRechargeLevelPref.setValue(
+                    mChargingControlRechargeLevelPref.getSetting());
+        }
+
+        if (mChargingControlLimitSchedulePref != null) {
+            mChargingControlLimitSchedulePref.setChecked(
+                    LineageSettings.System.getInt(requireContext().getContentResolver(),
+                            LineageSettings.System.CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED, 0) != 0);
+        }
+
+        if (mChargingControlLimitStartTimePref != null) {
+            mChargingControlLimitStartTimePref.setValue(
+                    mChargingControlLimitStartTimePref.getTimeSetting());
+        }
+
+        if (mChargingControlLimitEndTimePref != null) {
+            mChargingControlLimitEndTimePref.setValue(
+                    mChargingControlLimitEndTimePref.getTimeSetting());
+        }
+
+        refreshUi();
     }
 
     private void refreshUi() {
@@ -141,8 +195,14 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
         boolean isChargingControlStartTimePrefVisible = false;
         boolean isChargingControlTargetTimePrefVisible = false;
         boolean isChargingControlLimitPrefVisible = false;
+        boolean isChargingControlRechargeLevelPrefVisible = false;
+        boolean isChargingControlLimitSchedulePrefVisible = false;
+        boolean isChargingControlLimitStartTimePrefVisible = false;
+        boolean isChargingControlLimitEndTimePrefVisible = false;
 
         final Resources res = getResources();
+        final boolean limitScheduleEnabled = mChargingControlLimitSchedulePref != null
+                && mChargingControlLimitSchedulePref.isChecked();
 
         switch (chargingControlMode) {
             case MODE_AUTO:
@@ -156,6 +216,10 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
             case MODE_LIMIT:
                 summary = res.getString(R.string.charging_control_mode_limit_summary);
                 isChargingControlLimitPrefVisible = true;
+                isChargingControlRechargeLevelPrefVisible = true;
+                isChargingControlLimitSchedulePrefVisible = true;
+                isChargingControlLimitStartTimePrefVisible = limitScheduleEnabled;
+                isChargingControlLimitEndTimePrefVisible = limitScheduleEnabled;
                 break;
             default:
                 return;
@@ -173,6 +237,26 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
 
         if (mChargingControlLimitPref != null) {
             mChargingControlLimitPref.setVisible(isChargingControlLimitPrefVisible);
+        }
+
+        if (mChargingControlRechargeLevelPref != null) {
+            mChargingControlRechargeLevelPref.setVisible(
+                    isChargingControlRechargeLevelPrefVisible);
+        }
+
+        if (mChargingControlLimitSchedulePref != null) {
+            mChargingControlLimitSchedulePref.setVisible(
+                    isChargingControlLimitSchedulePrefVisible);
+        }
+
+        if (mChargingControlLimitStartTimePref != null) {
+            mChargingControlLimitStartTimePref.setVisible(
+                    isChargingControlLimitStartTimePrefVisible);
+        }
+
+        if (mChargingControlLimitEndTimePref != null) {
+            mChargingControlLimitEndTimePref.setVisible(
+                    isChargingControlLimitEndTimePrefVisible);
         }
     }
 
@@ -202,6 +286,18 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
             final int chargingControlMode = Integer.parseInt((String) objValue);
             mHealthInterface.setMode(chargingControlMode);
             refreshUi(chargingControlMode);
+        } else if (preference == mChargingControlLimitPref) {
+            if (mChargingControlRechargeLevelPref != null) {
+                mChargingControlRechargeLevelPref.setChargingLimit((Integer) objValue);
+            }
+        } else if (preference == mChargingControlLimitSchedulePref) {
+            final boolean scheduleEnabled = (Boolean) objValue;
+            if (mChargingControlLimitStartTimePref != null) {
+                mChargingControlLimitStartTimePref.setVisible(scheduleEnabled);
+            }
+            if (mChargingControlLimitEndTimePref != null) {
+                mChargingControlLimitEndTimePref.setVisible(scheduleEnabled);
+            }
         }
         return true;
     }
@@ -241,6 +337,10 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
                 result.add(CHARGING_CONTROL_START_TIME_PREF);
                 result.add(CHARGING_CONTROL_TARGET_TIME_PREF);
                 result.add(CHARGING_CONTROL_LIMIT_PREF);
+                result.add(CHARGING_CONTROL_RECHARGE_LEVEL_PREF);
+                result.add(CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED_PREF);
+                result.add(CHARGING_CONTROL_LIMIT_START_TIME_PREF);
+                result.add(CHARGING_CONTROL_LIMIT_END_TIME_PREF);
             }
             return result;
         }

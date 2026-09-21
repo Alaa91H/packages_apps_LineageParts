@@ -33,4 +33,26 @@
         android:title="@string/charging_control_limit_title"
         android:dependency="charging_control_enabled" />
 
+    <org.lineageos.lineageparts.health.RechargeLevelPreference
+        android:key="charging_control_recharge_level"
+        android:title="@string/charging_control_recharge_level_title"
+        android:dependency="charging_control_enabled" />
+
+    <lineageos.preference.LineageSystemSettingSwitchPreference
+        android:key="charging_control_limit_schedule_enabled"
+        android:title="@string/charging_control_limit_schedule_title"
+        android:summary="@string/charging_control_limit_schedule_summary"
+        android:defaultValue="false"
+        android:dependency="charging_control_enabled" />
+
+    <org.lineageos.lineageparts.health.LimitStartTimePreference
+        android:key="charging_control_limit_start_time"
+        android:title="@string/charging_control_limit_start_time_title"
+        android:dependency="charging_control_limit_schedule_enabled" />
+
+    <org.lineageos.lineageparts.health.LimitEndTimePreference
+        android:key="charging_control_limit_end_time"
+        android:title="@string/charging_control_limit_end_time_title"
+        android:dependency="charging_control_limit_schedule_enabled" />
+
 </PreferenceScreen>
