@@ -45,6 +45,7 @@ public class ChargingLimitPreference extends SliderPreference
         mChargingLimitValue.setVisibility(View.VISIBLE);
 
         mSlider = (Slider) holder.findViewById(R.id.slider);
+        mSlider.removeOnSliderTouchListener(this);
         mSlider.addOnSliderTouchListener(this);
         mSlider.setLabelBehavior(LabelFormatter.LABEL_FLOATING);
         mSlider.setStepSize(1);
@@ -70,7 +71,10 @@ public class ChargingLimitPreference extends SliderPreference
             return;
         }
 
-        setSetting(newLimit);
+        if (!setSetting(newLimit)) {
+            setValue(getSetting());
+            return;
+        }
         updateValue(newLimit);
     }
 
@@ -85,8 +89,8 @@ public class ChargingLimitPreference extends SliderPreference
         return mHealthInterface.getLimit();
     }
 
-    protected void setSetting(final int chargingLimit) {
-        mHealthInterface.setLimit(chargingLimit);
+    protected boolean setSetting(final int chargingLimit) {
+        return mHealthInterface.setLimit(chargingLimit);
     }
 
     private void updateValue(final int value) {

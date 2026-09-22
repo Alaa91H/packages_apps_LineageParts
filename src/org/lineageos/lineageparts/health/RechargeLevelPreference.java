@@ -69,15 +69,31 @@ public class RechargeLevelPreference extends SliderPreference
     @Override
     public void onStopTrackingTouch(final Slider slider) {
         final int newRechargeLevel = (int) slider.getValue();
-        setSetting(newRechargeLevel);
+        if (!callChangeListener(newRechargeLevel) || !setSetting(newRechargeLevel)) {
+            setValue(getSetting());
+            return;
+        }
         updateValue(newRechargeLevel);
     }
 
     public void setChargingLimit(final int chargingLimit) {
+        final int previousChargingLimit = mChargingLimit;
         mChargingLimit = chargingLimit;
-        final int currentLevel = getSetting();
-        setSetting(currentLevel);
-        notifyChanged();
+
+        final int defaultLevel = getMaxRechargeLevel(chargingLimit);
+        final int storedLevel = LineageSettings.System.getInt(
+                getContext().getContentResolver(),
+                LineageSettings.System.CHARGING_CONTROL_RECHARGE_LEVEL,
+                defaultLevel);
+        final int clampedLevel = clamp(storedLevel, chargingLimit);
+        final boolean corrected = storedLevel != clampedLevel;
+
+        if (corrected) {
+            setSetting(clampedLevel);
+        }
+        if (previousChargingLimit != chargingLimit || corrected) {
+            notifyChanged();
+        }
     }
 
     public void setValue(final int value) {
@@ -104,8 +120,8 @@ public class RechargeLevelPreference extends SliderPreference
         return clamp(value, chargingLimit);
     }
 
-    private void setSetting(final int rechargeLevel) {
-        LineageSettings.System.putInt(getContext().getContentResolver(),
+    private boolean setSetting(final int rechargeLevel) {
+        return LineageSettings.System.putInt(getContext().getContentResolver(),
                 LineageSettings.System.CHARGING_CONTROL_RECHARGE_LEVEL,
                 clamp(rechargeLevel, getChargingLimit()));
     }
