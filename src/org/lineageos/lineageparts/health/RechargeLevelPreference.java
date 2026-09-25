@@ -26,6 +26,9 @@ public class RechargeLevelPreference extends SliderPreference
         implements Slider.OnSliderTouchListener {
     private static final int MIN_RECHARGE_LEVEL = 20;
     private static final int MIN_RECHARGE_GAP = 1;
+    private static final int MIN_CHARGING_LIMIT = 70;
+    private static final int MAX_CHARGING_LIMIT = 100;
+    private static final int FALLBACK_CHARGING_LIMIT = 100;
 
     private Slider mSlider;
     private TextView mRechargeLevelValue;
@@ -69,15 +72,31 @@ public class RechargeLevelPreference extends SliderPreference
     @Override
     public void onStopTrackingTouch(final Slider slider) {
         final int newRechargeLevel = (int) slider.getValue();
-        setSetting(newRechargeLevel);
+        if (!callChangeListener(newRechargeLevel) || !setSetting(newRechargeLevel)) {
+            setValue(getSetting());
+            return;
+        }
         updateValue(newRechargeLevel);
     }
 
     public void setChargingLimit(final int chargingLimit) {
-        mChargingLimit = chargingLimit;
-        final int currentLevel = getSetting();
-        setSetting(currentLevel);
-        notifyChanged();
+        final int previousChargingLimit = mChargingLimit;
+        mChargingLimit = sanitizeChargingLimit(chargingLimit);
+
+        final int defaultLevel = getMaxRechargeLevel(mChargingLimit);
+        final int storedLevel = LineageSettings.System.getInt(
+                getContext().getContentResolver(),
+                LineageSettings.System.CHARGING_CONTROL_RECHARGE_LEVEL,
+                defaultLevel);
+        final int clampedLevel = clamp(storedLevel, mChargingLimit);
+        final boolean corrected = storedLevel != clampedLevel;
+
+        if (corrected) {
+            setSetting(clampedLevel);
+        }
+        if (previousChargingLimit != mChargingLimit || corrected) {
+            notifyChanged();
+        }
     }
 
     public void setValue(final int value) {
@@ -104,14 +123,21 @@ public class RechargeLevelPreference extends SliderPreference
         return clamp(value, chargingLimit);
     }
 
-    private void setSetting(final int rechargeLevel) {
-        LineageSettings.System.putInt(getContext().getContentResolver(),
+    private boolean setSetting(final int rechargeLevel) {
+        return LineageSettings.System.putInt(getContext().getContentResolver(),
                 LineageSettings.System.CHARGING_CONTROL_RECHARGE_LEVEL,
                 clamp(rechargeLevel, getChargingLimit()));
     }
 
     private int getChargingLimit() {
-        return mChargingLimit > 0 ? mChargingLimit : mHealthInterface.getLimit();
+        return mChargingLimit > 0
+                ? mChargingLimit
+                : sanitizeChargingLimit(mHealthInterface.getLimit());
+    }
+
+    private int sanitizeChargingLimit(final int value) {
+        return value >= MIN_CHARGING_LIMIT && value <= MAX_CHARGING_LIMIT
+                ? value : FALLBACK_CHARGING_LIMIT;
     }
 
     private int getMaxRechargeLevel(final int chargingLimit) {
