@@ -24,6 +24,9 @@ import org.lineageos.lineageparts.R;
 public class ChargingLimitPreference extends SliderPreference
         implements Slider.OnSliderTouchListener {
     private static final String TAG = ChargingLimitPreference.class.getSimpleName();
+    private static final int MIN_CHARGING_LIMIT = 70;
+    private static final int MAX_CHARGING_LIMIT = 100;
+    private static final int FALLBACK_CHARGING_LIMIT = 100;
 
     private Slider mSlider;
 
@@ -50,8 +53,8 @@ public class ChargingLimitPreference extends SliderPreference
         mSlider.setLabelBehavior(LabelFormatter.LABEL_FLOATING);
         mSlider.setStepSize(1);
         mSlider.setTickVisible(false);
-        mSlider.setValueFrom(70);
-        mSlider.setValueTo(100);
+        mSlider.setValueFrom(MIN_CHARGING_LIMIT);
+        mSlider.setValueTo(MAX_CHARGING_LIMIT);
 
         int currLimit = getSetting();
         mSlider.setValue(currLimit);
@@ -79,14 +82,20 @@ public class ChargingLimitPreference extends SliderPreference
     }
 
     public void setValue(final int value) {
+        final int safeValue = sanitizeChargingLimit(value);
         if (mSlider != null) {
-            mSlider.setValue(value);
+            mSlider.setValue(safeValue);
         }
-        updateValue(value);
+        updateValue(safeValue);
     }
 
     protected int getSetting() {
-        return mHealthInterface.getLimit();
+        return sanitizeChargingLimit(mHealthInterface.getLimit());
+    }
+
+    private int sanitizeChargingLimit(final int value) {
+        return value >= MIN_CHARGING_LIMIT && value <= MAX_CHARGING_LIMIT
+                ? value : FALLBACK_CHARGING_LIMIT;
     }
 
     protected boolean setSetting(final int chargingLimit) {

@@ -182,6 +182,9 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
                         mChargingControlTargetTimePref.getTimeSetting());
             }
         } else if (CHARGING_CONTROL_LIMIT_URI.equals(contentUri)) {
+            // This notification arrives after HealthInterface commits the new limit. Update the
+            // linked Recharge range here instead of doing it optimistically from the preference
+            // change listener, so a failed backend write cannot leave the two sliders out of sync.
             final int limit = mHealthInterface.getLimit();
             if (mChargingControlLimitPref != null) {
                 mChargingControlLimitPref.setValue(limit);
@@ -384,10 +387,6 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
                 return false;
             }
             refreshUi(chargingControlMode);
-        } else if (preference == mChargingControlLimitPref) {
-            if (mChargingControlRechargeLevelPref != null) {
-                mChargingControlRechargeLevelPref.setChargingLimit((Integer) objValue);
-            }
         } else if (preference == mChargingControlLimitSchedulePref) {
             final boolean scheduleEnabled = (Boolean) objValue;
             if (mChargingControlLimitStartTimePref != null) {
