@@ -32,6 +32,12 @@ for key in keys:
 
 require(recharge, "private static final int MIN_RECHARGE_LEVEL = 20;", "RechargeLevelPreference")
 require(recharge, "private static final int MIN_RECHARGE_GAP = 1;", "RechargeLevelPreference")
+require(recharge, "private static final int MIN_CHARGING_LIMIT = 70;", "RechargeLevelPreference")
+require(recharge, "private static final int MAX_CHARGING_LIMIT = 100;", "RechargeLevelPreference")
+require(recharge, "sanitizeChargingLimit(mHealthInterface.getLimit())",
+        "RechargeLevelPreference invalid limit guard")
+require(recharge, "mChargingLimit = sanitizeChargingLimit(chargingLimit);",
+        "RechargeLevelPreference external limit guard")
 require(recharge, "mSlider.setStepSize(1);", "RechargeLevelPreference")
 require(recharge, "mSlider.removeOnSliderTouchListener(this);", "RechargeLevelPreference lifecycle")
 require(recharge, "!callChangeListener(newRechargeLevel) || !setSetting(newRechargeLevel)",
@@ -50,6 +56,16 @@ for setting_key in (
 require(settings, "setVisible(scheduleEnabled);", "ChargingControlSettings schedule visibility")
 require(settings, "result.add(CHARGING_CONTROL_RECHARGE_LEVEL_PREF);", "ChargingControl search index")
 require(settings, "result.add(CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED_PREF);", "ChargingControl search index")
+require(limit, "private static final int MIN_CHARGING_LIMIT = 70;",
+        "ChargingLimitPreference range")
+require(limit, "private static final int MAX_CHARGING_LIMIT = 100;",
+        "ChargingLimitPreference range")
+require(limit, "private static final int FALLBACK_CHARGING_LIMIT = 100;",
+        "ChargingLimitPreference fallback")
+require(limit, "sanitizeChargingLimit(mHealthInterface.getLimit())",
+        "ChargingLimitPreference invalid limit guard")
+require(limit, "final int safeValue = sanitizeChargingLimit(value);",
+        "ChargingLimitPreference external refresh guard")
 require(limit, "mSlider.removeOnSliderTouchListener(this);",
         "ChargingLimitPreference lifecycle")
 require(limit, "if (!callChangeListener(newLimit))", "ChargingLimitPreference listener contract")
