@@ -26,6 +26,9 @@ public class RechargeLevelPreference extends SliderPreference
         implements Slider.OnSliderTouchListener {
     private static final int MIN_RECHARGE_LEVEL = 20;
     private static final int MIN_RECHARGE_GAP = 1;
+    private static final int MIN_CHARGING_LIMIT = 70;
+    private static final int MAX_CHARGING_LIMIT = 100;
+    private static final int FALLBACK_CHARGING_LIMIT = 100;
 
     private Slider mSlider;
     private TextView mRechargeLevelValue;
@@ -78,20 +81,20 @@ public class RechargeLevelPreference extends SliderPreference
 
     public void setChargingLimit(final int chargingLimit) {
         final int previousChargingLimit = mChargingLimit;
-        mChargingLimit = chargingLimit;
+        mChargingLimit = sanitizeChargingLimit(chargingLimit);
 
-        final int defaultLevel = getMaxRechargeLevel(chargingLimit);
+        final int defaultLevel = getMaxRechargeLevel(mChargingLimit);
         final int storedLevel = LineageSettings.System.getInt(
                 getContext().getContentResolver(),
                 LineageSettings.System.CHARGING_CONTROL_RECHARGE_LEVEL,
                 defaultLevel);
-        final int clampedLevel = clamp(storedLevel, chargingLimit);
+        final int clampedLevel = clamp(storedLevel, mChargingLimit);
         final boolean corrected = storedLevel != clampedLevel;
 
         if (corrected) {
             setSetting(clampedLevel);
         }
-        if (previousChargingLimit != chargingLimit || corrected) {
+        if (previousChargingLimit != mChargingLimit || corrected) {
             notifyChanged();
         }
     }
@@ -127,7 +130,14 @@ public class RechargeLevelPreference extends SliderPreference
     }
 
     private int getChargingLimit() {
-        return mChargingLimit > 0 ? mChargingLimit : mHealthInterface.getLimit();
+        return mChargingLimit > 0
+                ? mChargingLimit
+                : sanitizeChargingLimit(mHealthInterface.getLimit());
+    }
+
+    private int sanitizeChargingLimit(final int value) {
+        return value >= MIN_CHARGING_LIMIT && value <= MAX_CHARGING_LIMIT
+                ? value : FALLBACK_CHARGING_LIMIT;
     }
 
     private int getMaxRechargeLevel(final int chargingLimit) {
