@@ -1,0 +1,39 @@
+name: Charging Control UI validation
+
+on:
+  pull_request:
+    branches:
+      - cnb
+      - "fix/charging-control-*"
+      - "perf/charging-control-*"
+    paths:
+      - "src/org/lineageos/lineageparts/health/**"
+      - "res/xml/charging_control_settings.xml"
+      - "res/values/strings.xml"
+      - "tools/validate_charging_control_ui.py"
+      - ".github/workflows/charging-control-ui-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Charging Control UI invariants
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Validate checker syntax
+        run: python3 -m py_compile tools/validate_charging_control_ui.py
+
+      - name: Validate Charging Control UI
+        run: python3 tools/validate_charging_control_ui.py
+
+      - name: Check patch whitespace
+        run: git diff --check HEAD^ HEAD

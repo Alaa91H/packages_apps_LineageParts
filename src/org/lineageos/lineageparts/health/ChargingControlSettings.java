@@ -11,6 +11,7 @@ import static lineageos.health.HealthInterface.MODE_MANUAL;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.ArraySet;
 import android.view.Menu;
@@ -54,6 +55,29 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
             "charging_control_limit_start_time";
     private static final String CHARGING_CONTROL_LIMIT_END_TIME_PREF =
             "charging_control_limit_end_time";
+
+    private static final Uri CHARGING_CONTROL_ENABLED_URI =
+            LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_ENABLED);
+    private static final Uri CHARGING_CONTROL_MODE_URI =
+            LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_MODE);
+    private static final Uri CHARGING_CONTROL_START_TIME_URI =
+            LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_START_TIME);
+    private static final Uri CHARGING_CONTROL_TARGET_TIME_URI =
+            LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_TARGET_TIME);
+    private static final Uri CHARGING_CONTROL_LIMIT_URI =
+            LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_LIMIT);
+    private static final Uri CHARGING_CONTROL_RECHARGE_LEVEL_URI =
+            LineageSettings.System.getUriFor(
+                    LineageSettings.System.CHARGING_CONTROL_RECHARGE_LEVEL);
+    private static final Uri CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED_URI =
+            LineageSettings.System.getUriFor(
+                    LineageSettings.System.CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED);
+    private static final Uri CHARGING_CONTROL_LIMIT_START_TIME_URI =
+            LineageSettings.System.getUriFor(
+                    LineageSettings.System.CHARGING_CONTROL_LIMIT_START_TIME);
+    private static final Uri CHARGING_CONTROL_LIMIT_END_TIME_URI =
+            LineageSettings.System.getUriFor(
+                    LineageSettings.System.CHARGING_CONTROL_LIMIT_END_TIME);
 
     private LineageSystemSettingMainSwitchPreference mChargingControlEnabledPref;
     private LineageSystemSettingListPreference mChargingControlModePref;
@@ -117,15 +141,85 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
 
         refreshValues();
 
-        watch(LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_ENABLED));
-        watch(LineageSettings.System.getUriFor(
-                LineageSettings.System.CHARGING_CONTROL_RECHARGE_LEVEL));
-        watch(LineageSettings.System.getUriFor(
-                LineageSettings.System.CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED));
-        watch(LineageSettings.System.getUriFor(
-                LineageSettings.System.CHARGING_CONTROL_LIMIT_START_TIME));
-        watch(LineageSettings.System.getUriFor(
-                LineageSettings.System.CHARGING_CONTROL_LIMIT_END_TIME));
+        watch(CHARGING_CONTROL_ENABLED_URI,
+                CHARGING_CONTROL_MODE_URI,
+                CHARGING_CONTROL_START_TIME_URI,
+                CHARGING_CONTROL_TARGET_TIME_URI,
+                CHARGING_CONTROL_LIMIT_URI,
+                CHARGING_CONTROL_RECHARGE_LEVEL_URI,
+                CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED_URI,
+                CHARGING_CONTROL_LIMIT_START_TIME_URI,
+                CHARGING_CONTROL_LIMIT_END_TIME_URI);
+    }
+
+    @Override
+    public void onSettingsChanged(final Uri contentUri) {
+        // SettingsHelper emits a null callback when each URI is first registered. The initial
+        // values were already loaded immediately before watch(), so avoid redundant PartsUpdater
+        // notifications and preference work for those registration callbacks.
+        if (contentUri == null || !isAdded() || mHealthInterface == null) {
+            return;
+        }
+
+        if (CHARGING_CONTROL_ENABLED_URI.equals(contentUri)) {
+            if (mChargingControlEnabledPref != null) {
+                mChargingControlEnabledPref.setChecked(mHealthInterface.getEnabled());
+            }
+        } else if (CHARGING_CONTROL_MODE_URI.equals(contentUri)) {
+            final int mode = mHealthInterface.getMode();
+            if (mChargingControlModePref != null) {
+                mChargingControlModePref.setValue(Integer.toString(mode));
+            }
+            refreshUi(mode);
+        } else if (CHARGING_CONTROL_START_TIME_URI.equals(contentUri)) {
+            if (mChargingControlStartTimePref != null) {
+                mChargingControlStartTimePref.setValue(
+                        mChargingControlStartTimePref.getTimeSetting());
+            }
+        } else if (CHARGING_CONTROL_TARGET_TIME_URI.equals(contentUri)) {
+            if (mChargingControlTargetTimePref != null) {
+                mChargingControlTargetTimePref.setValue(
+                        mChargingControlTargetTimePref.getTimeSetting());
+            }
+        } else if (CHARGING_CONTROL_LIMIT_URI.equals(contentUri)) {
+            // This notification arrives after HealthInterface commits the new limit. Update the
+            // linked Recharge range here instead of doing it optimistically from the preference
+            // change listener, so a failed backend write cannot leave the two sliders out of sync.
+            final int limit = mHealthInterface.getLimit();
+            if (mChargingControlLimitPref != null) {
+                mChargingControlLimitPref.setValue(limit);
+            }
+            if (mChargingControlRechargeLevelPref != null) {
+                mChargingControlRechargeLevelPref.setChargingLimit(limit);
+                mChargingControlRechargeLevelPref.setValue(
+                        mChargingControlRechargeLevelPref.getSetting());
+            }
+        } else if (CHARGING_CONTROL_RECHARGE_LEVEL_URI.equals(contentUri)) {
+            if (mChargingControlRechargeLevelPref != null) {
+                mChargingControlRechargeLevelPref.setValue(
+                        mChargingControlRechargeLevelPref.getSetting());
+            }
+        } else if (CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED_URI.equals(contentUri)) {
+            if (mChargingControlLimitSchedulePref != null) {
+                mChargingControlLimitSchedulePref.setChecked(
+                        LineageSettings.System.getInt(requireContext().getContentResolver(),
+                                LineageSettings.System.CHARGING_CONTROL_LIMIT_SCHEDULE_ENABLED,
+                                0) != 0);
+            }
+            refreshUi();
+        } else if (CHARGING_CONTROL_LIMIT_START_TIME_URI.equals(contentUri)) {
+            if (mChargingControlLimitStartTimePref != null) {
+                mChargingControlLimitStartTimePref.setValue(
+                        mChargingControlLimitStartTimePref.getTimeSetting());
+            }
+        } else if (CHARGING_CONTROL_LIMIT_END_TIME_URI.equals(contentUri)) {
+            if (mChargingControlLimitEndTimePref != null) {
+                mChargingControlLimitEndTimePref.setValue(
+                        mChargingControlLimitEndTimePref.getTimeSetting());
+            }
+        }
+
+        super.onSettingsChanged(contentUri);
     }
 
     @Override
@@ -293,10 +387,6 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
                 return false;
             }
             refreshUi(chargingControlMode);
-        } else if (preference == mChargingControlLimitPref) {
-            if (mChargingControlRechargeLevelPref != null) {
-                mChargingControlRechargeLevelPref.setChargingLimit((Integer) objValue);
-            }
         } else if (preference == mChargingControlLimitSchedulePref) {
             final boolean scheduleEnabled = (Boolean) objValue;
             if (mChargingControlLimitStartTimePref != null) {
