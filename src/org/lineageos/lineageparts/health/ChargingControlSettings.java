@@ -11,6 +11,7 @@ import static lineageos.health.HealthInterface.MODE_MANUAL;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.ArraySet;
 import android.view.Menu;
@@ -45,6 +46,17 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
     private static final String CHARGING_CONTROL_START_TIME_PREF = "charging_control_start_time";
     private static final String CHARGING_CONTROL_TARGET_TIME_PREF = "charging_control_target_time";
     private static final String CHARGING_CONTROL_LIMIT_PREF = "charging_control_charging_limit";
+
+    private static final Uri CHARGING_CONTROL_ENABLED_URI =
+            LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_ENABLED);
+    private static final Uri CHARGING_CONTROL_MODE_URI =
+            LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_MODE);
+    private static final Uri CHARGING_CONTROL_START_TIME_URI =
+            LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_START_TIME);
+    private static final Uri CHARGING_CONTROL_TARGET_TIME_URI =
+            LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_TARGET_TIME);
+    private static final Uri CHARGING_CONTROL_LIMIT_URI =
+            LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_LIMIT);
 
     private LineageSystemSettingMainSwitchPreference mChargingControlEnabledPref;
     private LineageSystemSettingListPreference mChargingControlModePref;
@@ -94,7 +106,46 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
 
         refreshValues();
 
-        watch(LineageSettings.System.getUriFor(LineageSettings.System.CHARGING_CONTROL_ENABLED));
+        watch(CHARGING_CONTROL_ENABLED_URI,
+                CHARGING_CONTROL_MODE_URI,
+                CHARGING_CONTROL_START_TIME_URI,
+                CHARGING_CONTROL_TARGET_TIME_URI,
+                CHARGING_CONTROL_LIMIT_URI);
+    }
+
+    @Override
+    public void onSettingsChanged(final Uri contentUri) {
+        if (contentUri == null || !isAdded() || mHealthInterface == null) {
+            return;
+        }
+
+        if (CHARGING_CONTROL_ENABLED_URI.equals(contentUri)) {
+            if (mChargingControlEnabledPref != null) {
+                mChargingControlEnabledPref.setChecked(mHealthInterface.getEnabled());
+            }
+        } else if (CHARGING_CONTROL_MODE_URI.equals(contentUri)) {
+            final int mode = mHealthInterface.getMode();
+            if (mChargingControlModePref != null) {
+                mChargingControlModePref.setValue(Integer.toString(mode));
+            }
+            refreshUi(mode);
+        } else if (CHARGING_CONTROL_START_TIME_URI.equals(contentUri)) {
+            if (mChargingControlStartTimePref != null) {
+                mChargingControlStartTimePref.setValue(
+                        mChargingControlStartTimePref.getTimeSetting());
+            }
+        } else if (CHARGING_CONTROL_TARGET_TIME_URI.equals(contentUri)) {
+            if (mChargingControlTargetTimePref != null) {
+                mChargingControlTargetTimePref.setValue(
+                        mChargingControlTargetTimePref.getTimeSetting());
+            }
+        } else if (CHARGING_CONTROL_LIMIT_URI.equals(contentUri)) {
+            if (mChargingControlLimitPref != null) {
+                mChargingControlLimitPref.setValue(mHealthInterface.getLimit());
+            }
+        }
+
+        super.onSettingsChanged(contentUri);
     }
 
     @Override
