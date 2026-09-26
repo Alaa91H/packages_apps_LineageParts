@@ -197,10 +197,17 @@ public class ChargingControlSettings extends SettingsPreferenceFragment implemen
     @Override
     public boolean onPreferenceChange(final Preference preference, final Object objValue) {
         if (preference == mChargingControlEnabledPref) {
-            mHealthInterface.setEnabled((Boolean) objValue);
+            return mHealthInterface.setEnabled((Boolean) objValue);
         } else if (preference == mChargingControlModePref) {
-            final int chargingControlMode = Integer.parseInt((String) objValue);
-            mHealthInterface.setMode(chargingControlMode);
+            final int chargingControlMode;
+            try {
+                chargingControlMode = Integer.parseInt((String) objValue);
+            } catch (NumberFormatException e) {
+                return false;
+            }
+            if (!mHealthInterface.setMode(chargingControlMode)) {
+                return false;
+            }
             refreshUi(chargingControlMode);
         }
         return true;
