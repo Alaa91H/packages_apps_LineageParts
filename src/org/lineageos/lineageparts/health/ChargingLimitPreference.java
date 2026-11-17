@@ -23,9 +23,14 @@ import org.lineageos.lineageparts.R;
 
 public class ChargingLimitPreference extends SliderPreference
         implements Slider.OnSliderTouchListener {
+    public interface OnLimitChangedListener {
+        void onLimitChanged(int limit);
+    }
+
     private static final String TAG = ChargingLimitPreference.class.getSimpleName();
 
     private Slider mSlider;
+    private OnLimitChangedListener mOnLimitChangedListener;
 
     private TextView mChargingLimitValue;
 
@@ -67,6 +72,14 @@ public class ChargingLimitPreference extends SliderPreference
 
         setSetting(newLimit);
         updateValue(newLimit);
+
+        if (mOnLimitChangedListener != null) {
+            mOnLimitChangedListener.onLimitChanged(newLimit);
+        }
+    }
+
+    public void setOnLimitChangedListener(final OnLimitChangedListener listener) {
+        mOnLimitChangedListener = listener;
     }
 
     public void setValue(final int value) {

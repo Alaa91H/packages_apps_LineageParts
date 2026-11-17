@@ -33,4 +33,9 @@
         android:title="@string/charging_control_limit_title"
         android:dependency="charging_control_enabled" />
 
+    <org.lineageos.lineageparts.health.ChargingRechargeLimitPreference
+        android:key="charging_control_recharge_limit"
+        android:title="@string/charging_control_recharge_limit_title"
+        android:dependency="charging_control_enabled" />
+
 </PreferenceScreen>

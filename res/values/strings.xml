@@ -84,6 +84,9 @@
     <string name="charging_control_target_time_summary">Battery will be fully charged by %s</string>
     <string name="charging_control_limit_title">Limit</string>
     <string name="charging_control_limit_summary">Current limit: %d%%</string>
+    <string name="charging_control_recharge_limit_title">Recharge limit</string>
+    <string name="charging_control_recharge_limit_summary">Charging resumes at %1$d%%</string>
+    <string name="charging_control_recharge_limit_narrow_warning">Small gap may cause frequent charging cycles</string>
 
     <!-- Battery light settings -->
     <string name="battery_light_title">Battery light</string>
