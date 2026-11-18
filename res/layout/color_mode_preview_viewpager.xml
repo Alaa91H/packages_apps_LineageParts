@@ -22,8 +22,8 @@
             android:id="@+id/arrow_previous"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
-            android:paddingLeft="24dp"
-            android:layout_gravity="center_vertical|left"
+            android:paddingStart="24dp"
+            android:layout_gravity="center_vertical|start"
             android:contentDescription="@string/back">
 
             <ImageView
@@ -43,8 +43,8 @@
             android:id="@+id/arrow_next"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
-            android:paddingRight="24dp"
-            android:layout_gravity="center_vertical|right"
+            android:paddingEnd="24dp"
+            android:layout_gravity="center_vertical|end"
             android:contentDescription="@string/next">
 
             <ImageView
